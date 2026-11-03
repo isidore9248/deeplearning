@@ -141,4 +141,243 @@ ValueError: Unable to find resource t64.exe in package pip._vendor.distlib
   python -m pip install xxx.whl
   ```
 
-# Reasoning and deployment (tensorRT10.5 + CUDA12.6)
+# inference 
+
+## ONNX runtime1.31 + Opencv4.13.0
+
+本文记录在 Windows x64 上安装 **ONNX Runtime C++ CPU 版**、配置 Visual Studio 2026 CMake 项目，以及排查常见错误的完整步骤。
+
+本文示例使用：
+
+- ONNX Runtime：`1.31.0`
+- 安装类型：CPU、Windows x64
+- 安装目录：`D:\onnxruntime`
+- IDE：Visual Studio Community 2026（Visual Studio 18）
+- 构建系统：CMake
+
+> CPU 版不需要安装 CUDA 或 cuDNN。
+
+
+## 1. 准备 Visual Studio 开发环境
+
+在 Visual Studio Installer 中确认已经安装以下组件：
+
+- 使用 C++ 的桌面开发
+- MSVC x64/x86 C++ 生成工具
+- Windows 10 或 Windows 11 SDK
+- 用于 Windows 的 C++ CMake 工具
+
+在 PowerShell 中可检查 CMake：
+
+```powershell
+cmake --version
+cmake --help
+```
+
+Visual Studio 2026 对应的 CMake 生成器名称应为：
+
+```text
+Visual Studio 18 2026
+```
+
+## 2. 下载并安装 ONNX Runtime CPU x64
+
+官方发布页：
+
+- https://github.com/microsoft/onnxruntime/releases
+- https://onnxruntime.ai/docs/get-started/with-cpp
+
+下载 CPU x64 压缩包：
+
+```text
+onnxruntime-win-x64-1.31.0.zip
+```
+
+对应的官方下载地址：
+
+```text
+https://github.com/microsoft/onnxruntime/releases/download/v1.31.0/onnxruntime-win-x64-1.31.0.zip
+```
+
+
+安装完成后，目录结构应类似：
+
+```text
+D:\onnxruntime\onnxruntime-win-x64-1.31.0
+├─ include
+│  ├─ onnxruntime_c_api.h
+│  └─ onnxruntime_cxx_api.h
+├─ lib
+│  ├─ onnxruntime.dll
+│  ├─ onnxruntime.lib
+│  └─ onnxruntime_providers_shared.dll
+├─ LICENSE
+└─ VERSION_NUMBER
+```
+
+检查安装版本：
+
+```powershell
+Get-Content D:\onnxruntime\onnxruntime-win-x64-1.31.0\VERSION_NUMBER
+```
+
+## 3. 配置ORT用户环境变量
+
+建议设置：
+
+```text
+ONNXRUNTIME_ROOT=D:\onnxruntime\onnxruntime-win-x64-10
+```
+
+并把以下目录加入当前用户的 `PATH`：
+
+```text
+D:\onnxruntime\onnxruntime-win-x64-1.31.0\lib
+```
+
+设置完成后，请重新启动 Visual Studio 和终端，使新环境变量生效。
+
+检查结果：
+
+```powershell
+[Environment]::GetEnvironmentVariable("ONNXRUNTIME_ROOT", "User")
+[Environment]::GetEnvironmentVariable("Path", "User")
+```
+
+## 4. 下载安装Opencv4.13.0
+
+
+
+
+
+## 6. 创建 Visual Studio CMake 项目
+
+一个最小项目可包含：
+
+```text
+onnxruntime-cpp-smoke-test
+├─ include
+├─ src
+├─ CmakeLists.txt
+├─ out
+└─ models
+```
+
+
+
+
+### 4.3 main.cpp
+
+```cpp
+#include <iostream>
+
+#include <onnxruntime_cxx_api.h>
+
+int main() {
+    try {
+        Ort::Env env{ORT_LOGGING_LEVEL_WARNING, "ort_smoke"};
+        Ort::SessionOptions session_options;
+        session_options.SetGraphOptimizationLevel(
+            GraphOptimizationLevel::ORT_ENABLE_ALL
+        );
+
+        std::cout << "ONNX Runtime C++ is ready.\n";
+        std::cout << "Runtime version: "
+                  << OrtGetApiBase()->GetVersionString()
+                  << '\n';
+        std::cout << "Execution provider: CPU\n";
+        return 0;
+    } catch (const Ort::Exception& error) {
+        std::cerr << "ONNX Runtime error: " << error.what() << '\n';
+        return 1;
+    }
+}
+```
+
+
+```text
+ONNX Runtime C++ is ready.
+Runtime version: 1.31.0
+Execution provider: CPU
+```
+
+
+
+## 7. 常见错误处理
+
+### 7.1 移动项目后 CMakeCache 路径不一致
+
+典型错误：
+
+```text
+The current CMakeCache.txt directory is different than the directory
+where CMakeCache.txt was created.
+```
+
+原因：`build` 中的 CMake 缓存记录了项目移动前的绝对路径。
+
+在 Visual Studio 中处理：
+
+1. 打开“项目”菜单。
+2. 选择“删除缓存并重新配置”。
+3. 等待 CMake 重新生成。
+
+命令行处理：
+
+```powershell
+cmake --preset vs2026-x64 --fresh
+cmake --build --preset release
+```
+
+
+
+### 7.3 找不到 onnxruntime_cxx_api.h
+
+检查：
+
+```powershell
+Test-Path D:\onnxruntime\include\onnxruntime_cxx_api.h
+```
+
+如果返回 `False`，说明压缩包没有正确解压，或者 `ONNXRUNTIME_ROOT` 指向了错误目录。
+
+### 7.4 链接时找不到 onnxruntime.lib
+
+检查：
+
+```powershell
+Test-Path D:\onnxruntime\lib\onnxruntime.lib
+```
+
+同时确认 Visual Studio、项目和 ONNX Runtime 包都使用相同架构。本示例全部使用 x64。
+
+### 7.5 运行时提示缺少 onnxruntime.dll
+
+确认以下文件存在：
+
+```text
+D:\onnxruntime\lib\onnxruntime.dll
+```
+
+本示例的 `CMakeLists.txt` 会在构建后自动把 DLL 复制到可执行文件目录。也可以把 `D:\onnxruntime\lib` 加入用户 `PATH`。
+
+## 8. CPU 版与 GPU 版的区别
+
+本文安装的是 CPU x64 版本：
+
+```text
+onnxruntime-win-x64-1.31.0.zip
+```
+
+它不依赖 CUDA/cuDNN，适合先验证 C++ API 和模型推理流程。以后若切换到 CUDA 版本，需要额外匹配 ONNX Runtime、CUDA、cuDNN 以及显卡驱动版本，不能只替换一个 DLL。
+
+## 9. 当前项目位置
+ONNX Runtime 安装目录：
+
+```text
+D:\onnxruntime\onnxruntime-win-x64-1.31.0
+```
+
+
+
+## tensorRT10.5 + CUDA12.6
