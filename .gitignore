@@ -1,0 +1,7 @@
+# Visual Studio local state and IntelliSense caches
+.vs/
+*.ipch
+
+# CMake out-of-source build directories
+out/
+cmake-build-*/

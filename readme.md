@@ -141,9 +141,7 @@ ValueError: Unable to find resource t64.exe in package pip._vendor.distlib
   python -m pip install xxx.whl
   ```
 
-# inference 
-
-## ONNX runtime1.31 + Opencv4.13.0
+# inference (ONNX runtime1.31 + Opencv4.13.0)
 
 本文记录在 Windows x64 上安装 **ONNX Runtime C++ CPU 版**、配置 Visual Studio 2026 CMake 项目，以及排查常见错误的完整步骤。
 
@@ -246,8 +244,42 @@ D:\onnxruntime\onnxruntime-win-x64-1.31.0\lib
 
 ## 4. 下载安装Opencv4.13.0
 
+官方发布页
+- https://github.com/opencv/opencv/releases#release-4.13.0
 
 
+解压后得到：
+```text
+
+D:\opencv\4.13\opencv
+│
+├── build
+│   ├── include
+│   │   └── opencv2
+│   └── x64
+│       └── vc16
+│           ├── bin
+│           └── lib
+└── sources
+```
+
+## 5. 配置Opencv用户环境变量
+
+新建变量：
+```text
+OpenCV_DIR=D:\opencv\4.13\opencv\build
+```
+
+并把以下目录加入当前用户的 PATH
+```text
+D:\opencv\4.13\opencv\build\x64\vc16\bin
+```
+
+验证
+```bash
+echo %OpenCV_DIR%
+where opencv_world4130.dll
+```
 
 
 ## 6. 创建 Visual Studio CMake 项目
@@ -262,45 +294,6 @@ onnxruntime-cpp-smoke-test
 ├─ out
 └─ models
 ```
-
-
-
-
-### 4.3 main.cpp
-
-```cpp
-#include <iostream>
-
-#include <onnxruntime_cxx_api.h>
-
-int main() {
-    try {
-        Ort::Env env{ORT_LOGGING_LEVEL_WARNING, "ort_smoke"};
-        Ort::SessionOptions session_options;
-        session_options.SetGraphOptimizationLevel(
-            GraphOptimizationLevel::ORT_ENABLE_ALL
-        );
-
-        std::cout << "ONNX Runtime C++ is ready.\n";
-        std::cout << "Runtime version: "
-                  << OrtGetApiBase()->GetVersionString()
-                  << '\n';
-        std::cout << "Execution provider: CPU\n";
-        return 0;
-    } catch (const Ort::Exception& error) {
-        std::cerr << "ONNX Runtime error: " << error.what() << '\n';
-        return 1;
-    }
-}
-```
-
-
-```text
-ONNX Runtime C++ is ready.
-Runtime version: 1.31.0
-Execution provider: CPU
-```
-
 
 
 ## 7. 常见错误处理
@@ -328,7 +321,6 @@ where CMakeCache.txt was created.
 cmake --preset vs2026-x64 --fresh
 cmake --build --preset release
 ```
-
 
 
 ### 7.3 找不到 onnxruntime_cxx_api.h
@@ -379,5 +371,4 @@ D:\onnxruntime\onnxruntime-win-x64-1.31.0
 ```
 
 
-
-## tensorRT10.5 + CUDA12.6
+# inference (tensorRT10.5 + CUDA12.6)
