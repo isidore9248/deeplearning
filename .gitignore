@@ -1,3 +1,6 @@
+#vscode
+.vscode/
+
 # Visual Studio local state and IntelliSense caches
 .vs/
 *.ipch
