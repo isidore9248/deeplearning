@@ -65,22 +65,21 @@ Conda会自动识别迁移后的环境
 1. 创建虚拟环境
 
 ```Shell
-conda create -n tensorflow python=3.9
+conda create -n pytorch python=3.9
 ```
 
-2. 安装tensorflow-gpu版本
+2. 换源
 
-```Shell
-pip install tensorflow-gpu==2.10.0 -i https://mirrors.aliyun.com/pypi/simple
+清华pip镜像
+```bash
+pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
+```
+阿里pip镜像
+```
+pip config set global.index-url https://mirrors.aliyun.com/pypi/simple/
 ```
 
-3. 安装其他依赖
-
-```Shell
-pip install -i https://mirrors.aliyun.com/pypi/simple pandas scikit-learn matplotlib numpy==1.21.5
-```
-
-4. 问题记录：
+3. 问题记录：
 
 - 缺少windowsapi动态库(zlibwapi.dll)
   - 解决方法：
@@ -124,7 +123,8 @@ ValueError: Unable to find resource t64.exe in package pip._vendor.distlib
   1. 离线安装包参考
 
   ```
-  https://download.pytorch.org/whl/torch_stable.html
+  https://download.pytorch.org/whl/cu118
+  https://download.pytorch.org/whl/cu118/torch
   ```
 
   ```
